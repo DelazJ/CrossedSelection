@@ -172,8 +172,13 @@ class CrossedSelection:
             parent=self.iface.mainWindow())
 
         self.dlg.valuesList.customContextMenuRequested.connect(self.context_menu)
+        # fill comboboxes
         self.listLayers(self.dlg.srcLayer)
         self.listLayers(self.dlg.tgtLayer)
+        self.updateFieldsBox(self.dlg.tgtLayer, self.dlg.tgtField)
+        self.updateFieldsBox(self.dlg.srcLayer, self.dlg.srcField)
+        self.updateFieldsBox(self.dlg.srcLayer, self.dlg.fltField)
+        self.showAttributes()
 
         # connect the signal to list the fields 
         self.dlg.srcLayer.currentIndexChanged.connect(self.updatesrcField)
@@ -326,13 +331,10 @@ class CrossedSelection:
         tgtLyr = myLayers[self.dlg.tgtLayer.currentIndex()]
         source_attributes = [feat.attributes()[self.dlg.srcField.currentIndex()] \
             for feat in srcLyr.getFeatures() ]
-        rowsChecked = []
-        selectedEntities = []
+        rowsChecked = [self.dlg.valuesList.item(rowList).text() for rowList in range(0, self.dlg.valuesList.count()) \
+            if self.dlg.valuesList.item(rowList).checkState() == Qt.Checked ]
                     
-        if self.dlg.advancedBox.isChecked():
-            rowsChecked = [self.dlg.valuesList.item(rowList).text() for rowList in range(0, self.dlg.valuesList.count()) \
-                if self.dlg.valuesList.item(rowList).checkState() == Qt.Checked ]
-                
+        if self.dlg.advancedBox.isChecked() and rowsChecked:
             source_attributes = [feat.attributes()[self.dlg.srcField.currentIndex()] \
                 for feat in srcLyr.getFeatures() if feat.attributes()[self.dlg.fltField.currentIndex()] in rowsChecked ]
             
