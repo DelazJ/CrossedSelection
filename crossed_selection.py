@@ -172,6 +172,7 @@ class CrossedSelection:
             parent=self.iface.mainWindow())
 
         self.dlg.valuesList.customContextMenuRequested.connect(self.context_menu)
+        
         # fill comboboxes
         self.listLayers(self.dlg.srcLayer)
         self.listLayers(self.dlg.tgtLayer)
@@ -179,7 +180,7 @@ class CrossedSelection:
         self.updateFieldsBox(self.dlg.srcLayer, self.dlg.srcField)
         self.updateFieldsBox(self.dlg.srcLayer, self.dlg.fltField)
         self.showAttributes()
-
+        
         # connect the signal to list the fields 
         self.dlg.srcLayer.currentIndexChanged.connect(self.updatesrcField)
         self.dlg.srcLayer.currentIndexChanged.connect(self.updatefltField)
@@ -226,23 +227,11 @@ class CrossedSelection:
         # return myLayers
         # myLayers[0:0]=[""]
         # for idx, nom in enumerate(vecteurs):
-        
-        
+
         # cBox.insertItem(0,"")
         for elt in myLayers:
             cBox.addItem(elt.name())
-        """# if srcCombobox.currentText() is not None:
-            # layername = srcCombobox.currentText()
-        for name, selectlayer in QgsMapLayerRegistry.instance().mapLayers().iteritems():
-                if selectlayer.name() == layername:
-                    # fields = layer.pendingFields()
-                    # for field in fields:
-                    for field in selectlayer.dataProvider().fields():
-                        tgtCombobox.addItem(field.name())
-        # self.blockSignals(False)
-        """
-    
-            
+
     def listFields(self, layer):
         """ Retrieve all the fields in a layer """
         field_names = []
@@ -260,7 +249,7 @@ class CrossedSelection:
                 # fieldBox.addItems(self.listFields(lyr))
         
         if myLayers == []:
-            fieldBox.addItems(self.listFields(myLayers[layerIdx]))
+            fieldBox.setCurrentIndex(-1)
         else :
             fieldBox.addItems(self.listFields(myLayers[layerIdx]))
         
@@ -284,6 +273,8 @@ class CrossedSelection:
 
     def showAttributes(self):
         """ List unique values of the selected field from source layer and show them in widget"""
+        if not self.checkExistingVector():
+            return
         listAttr = []
         self.dlg.valuesList.clear()
         lyr = myLayers[self.dlg.srcLayer.currentIndex()]
@@ -329,6 +320,7 @@ class CrossedSelection:
         """ Function that do the selection of features according to values set"""
         srcLyr = myLayers[self.dlg.srcLayer.currentIndex()]
         tgtLyr = myLayers[self.dlg.tgtLayer.currentIndex()]
+        
         source_attributes = [feat.attributes()[self.dlg.srcField.currentIndex()] \
             for feat in srcLyr.getFeatures() ]
         rowsChecked = [self.dlg.valuesList.item(rowList).text() for rowList in range(0, self.dlg.valuesList.count()) \
@@ -343,7 +335,7 @@ class CrossedSelection:
                 tgtLyr.select(feature.id())
                     
             
-    def checkvector(self):
+    def checkExistingVector(self):
         """ Check if there is a "no raster layer" in the project"""
         nb = 0
         for layer in self.iface.legendInterface().layers():
@@ -355,7 +347,7 @@ class CrossedSelection:
     def run(self):
         """ Run method that performs all the real work"""
         # check if there is valid layer to show the dialog
-        if self.checkvector()== 0 :
+        if self.checkExistingVector()== 0 :
             self.iface.messageBar().pushMessage(self.tr(u'Crossed Selection : '),
                 self.tr(u'There is no usable layer in the project. Please add at least one before running this plugin.'), level = QgsMessageBar.CRITICAL, duration = 5)
             return
