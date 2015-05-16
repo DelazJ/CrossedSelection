@@ -172,15 +172,7 @@ class CrossedSelection:
             parent=self.iface.mainWindow())
 
         self.dlg.valuesList.customContextMenuRequested.connect(self.context_menu)
-        
-        # fill comboboxes
-        self.listLayers(self.dlg.srcLayer)
-        self.listLayers(self.dlg.tgtLayer)
-        self.updateFieldsBox(self.dlg.tgtLayer, self.dlg.tgtField)
-        self.updateFieldsBox(self.dlg.srcLayer, self.dlg.srcField)
-        self.updateFieldsBox(self.dlg.srcLayer, self.dlg.fltField)
-        self.showAttributes()
-        
+
         # connect the signal to list the fields 
         self.dlg.srcLayer.currentIndexChanged.connect(self.updatesrcField)
         self.dlg.srcLayer.currentIndexChanged.connect(self.updatefltField)
@@ -223,15 +215,12 @@ class CrossedSelection:
         global myLayers
         myLayers = []
         myLayers = [lyr for lyr in self.iface.legendInterface().layers() if lyr.type() == QgsMapLayer.VectorLayer]
-        # myLayers.sort()
-        # return myLayers
-        # myLayers[0:0]=[""]
-        # for idx, nom in enumerate(vecteurs):
-
-        # cBox.insertItem(0,"")
-        for elt in myLayers:
-            cBox.addItem(elt.name())
-
+        if myLayers :
+            for elt in myLayers:
+                cBox.addItem(elt.name())
+        else :
+            cBox.setCurrentIndex(-1)
+    
     def listFields(self, layer):
         """ Retrieve all the fields in a layer """
         field_names = []
@@ -244,9 +233,6 @@ class CrossedSelection:
         # global myLayers
         fieldBox.clear()
         layerIdx = layerBox.currentIndex()
-        # for lyr in myLayers:
-            # if lyr.name() == layerBox.currentText() :
-                # fieldBox.addItems(self.listFields(lyr))
         
         if myLayers == []:
             fieldBox.setCurrentIndex(-1)
@@ -304,7 +290,7 @@ class CrossedSelection:
         return rowsChecked
                     
     def where(layer, exp):
-        """ from qgis doc """
+        """ from qgis doc - not used yet!!!"""
         exp = QgsExpression(exp)
         if exp.hasParserError():
             raise Expection(exp.parserErrorString())
@@ -325,7 +311,7 @@ class CrossedSelection:
             for feat in srcLyr.getFeatures() ]
         rowsChecked = [self.dlg.valuesList.item(rowList).text() for rowList in range(0, self.dlg.valuesList.count()) \
             if self.dlg.valuesList.item(rowList).checkState() == Qt.Checked ]
-                    
+
         if self.dlg.advancedBox.isChecked() and rowsChecked:
             source_attributes = [feat.attributes()[self.dlg.srcField.currentIndex()] \
                 for feat in srcLyr.getFeatures() if feat.attributes()[self.dlg.fltField.currentIndex()] in rowsChecked ]
@@ -333,14 +319,12 @@ class CrossedSelection:
         for feature in tgtLyr.getFeatures():
             if feature.attributes()[self.dlg.tgtField.currentIndex()] in source_attributes :
                 tgtLyr.select(feature.id())
-                    
             
     def checkExistingVector(self):
         """ Check if there is a "no raster layer" in the project"""
         nb = 0
         for layer in self.iface.legendInterface().layers():
-        # for name, layer in QgsMapLayerRegistry.instance().mapLayers().iteritems():
-            if not layer.type() == QgsMapLayer.RasterLayer :
+            if layer.type() == QgsMapLayer.VectorLayer :
                 nb += 1
         return nb
     
@@ -349,13 +333,19 @@ class CrossedSelection:
         # check if there is valid layer to show the dialog
         if self.checkExistingVector()== 0 :
             self.iface.messageBar().pushMessage(self.tr(u'Crossed Selection : '),
-                self.tr(u'There is no usable layer in the project. Please add at least one before running this plugin.'), level = QgsMessageBar.CRITICAL, duration = 5)
+                self.tr(u'There is no vector layer in the project. Please add at least one before running this plugin.'), level = QgsMessageBar.INFO, duration = 5)
             return
         # else :
+        # populate the comboboxes
+        self.listLayers(self.dlg.srcLayer)
+        self.listLayers(self.dlg.tgtLayer)
+        self.updateFieldsBox(self.dlg.tgtLayer, self.dlg.tgtField)
+        self.updateFieldsBox(self.dlg.srcLayer, self.dlg.srcField)
+        self.updateFieldsBox(self.dlg.srcLayer, self.dlg.fltField)
+        self.showAttributes()
+
         # show the dialog
         self.dlg.show()
-        # populate the layers combobox
-        # self.listLayers(self.dlg.srcLayer)
-        # self.listLayers(self.dlg.tgtLayer)
+        
         
 
